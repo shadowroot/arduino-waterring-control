@@ -1,0 +1,3 @@
+[submodule "lib/LCD-Keypad-Shield-Wemos-D1-Arduino-UNO"]
+	path = lib/LCD-Keypad-Shield-Wemos-D1-Arduino-UNO
+	url = https://github.com/kolandor/LCD-Keypad-Shield-Wemos-D1-Arduino-UNO.git

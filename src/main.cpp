@@ -10,7 +10,8 @@ Michael Jonathan, February 2019
 ********************************************************/
 
 // select the pins used on the LCD panel
-LiquidCrystal lcd(D6, D7, D2, D3, D4, D5);
+LiquidCrystal lcd(D8, D9, D4, D5, D6, D7, A0);
+//LcdKeypadShield lcd = LcdKeypadShield::createByBoaard(WemosD1R1);
 
 // define some values used by the panel and buttons
 int lcd_key     = 0;
@@ -41,15 +42,16 @@ int read_LCD_buttons()
 
 void setup()
 {
- lcd.begin(16, 2);              // start the library
- lcd.setCursor(0, 0);
- lcd.print("Created By");
- lcd.setCursor(0,1);
- lcd.print("Michael Jonathan");
- delay(3000);
- lcd.clear();
- lcd.setCursor(0,0);
- lcd.print("Push the buttons"); // print a simple message
+  Serial.begin(9600);
+  lcd.begin(16, 2);              // start the library
+  lcd.setCursor(0, 0);
+  lcd.print("Created By");
+  lcd.setCursor(0,1);
+  lcd.print("Michael Jonathan");
+  delay(3000);
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("Push the buttons"); // print a simple message
 }
  
 void loop()
