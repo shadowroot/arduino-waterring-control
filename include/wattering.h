@@ -6,10 +6,11 @@
 enum WatteringState{
     MANUAL_OFF,
     MANUAL_ON,
+    MANUAL_CYCLE,
     AUTOMATED_WATERING,
     AUTOMATED,
 };
-
+//might be just disconnected
 enum SensorsState{
     FAIL_SENSOR1,
     FAIL_SENSOR2,
@@ -22,7 +23,7 @@ enum SensorsState{
 */
 class Wattering{
     public:
-        Wattering(const SoilMoistureSensor& soilMoistureSensor1, const SoilMoistureSensor& soilMoistureSensor2) : currentWatteringState(AUTOMATED), soilMoistureSensor1(soilMoistureSensor1), soilMoistureSensor2(soilMoistureSensor2){}
+        Wattering(const SoilMoistureSensor& soilMoistureSensor1, const SoilMoistureSensor& soilMoistureSensor2, const Pump& pump) : currentWatteringState(AUTOMATED), soilMoistureSensor1(soilMoistureSensor1), soilMoistureSensor2(soilMoistureSensor2), pump(pump){}
         void setup_hook();
         void loop_hook();
         WatteringState getWatteringState(){
@@ -38,6 +39,17 @@ class Wattering{
         void manualOff(){
             currentWatteringState = MANUAL_OFF;
             pump.off();
+        }
+        void manualCycle(){
+            currentWatteringState = MANUAL_CYCLE;
+            pump.on();
+            startWateringTime = millis();
+        }
+        int getWatteringCycleSeconds(){
+            return wateringCycleSeconds;
+        }
+        void setWatteringCycleSeconds(int wateringCycleSeconds){
+            this->wateringCycleSeconds = wateringCycleSeconds;
         }
     private:
         WatteringState currentWatteringState;
@@ -60,13 +72,11 @@ void Wattering::loop_hook(){
     soilMoistureSensor1.loop_hook();
     soilMoistureSensor2.loop_hook();
     switch(currentWatteringState){
-        case MANUAL_OFF:
-            break;
-        case MANUAL_ON:
-            break;
         case AUTOMATED_WATERING:
             if(millis() - startWateringTime > wateringCycleSeconds * 1000){
                 currentWatteringState = AUTOMATED;
+                pump.off();
+                //either not working or disconnected
                 if(soilMoistureSensor1.isError() && soilMoistureSensor2.isError()){
                     sensorsState = FAIL_ALL_SENSORS;
                 }
@@ -87,13 +97,22 @@ void Wattering::loop_hook(){
                 currentWatteringState = AUTOMATED_WATERING;
                 soilMoistureSensor1.savePercentage();
                 soilMoistureSensor2.savePercentage();
+                pump.on();
                 startWateringTime = millis();
             }
             else if(millis() - lastWateringTime > wateringCycleSeconds * 1000){
                 currentWatteringState = AUTOMATED_WATERING;
                 soilMoistureSensor1.savePercentage();
                 soilMoistureSensor2.savePercentage();
+                pump.on();
                 startWateringTime = millis();
+            }
+            break;
+        case MANUAL_CYCLE:
+            if(millis() - startWateringTime > wateringCycleSeconds * 1000){
+                pump.off();
+                lastWateringTime = millis();
+                currentWatteringState = AUTOMATED;
             }
             break;
     }

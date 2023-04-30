@@ -28,6 +28,9 @@ class KeypadLCDControl{
         ButtonPressed read_LCD_buttons();
         void setup_hook();
         void loop_hook();
+        LiquidCrystal & getLCD(){
+          return lcd;
+        }
         void clear(){
           lcd.clear();
         }
