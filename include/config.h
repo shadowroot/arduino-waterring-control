@@ -15,6 +15,7 @@
 #define LAST_WATERRING_TEXT "Posledni zalevani"
 #define SOIL_MOISTURE_TEXT "Vlhkost pudy"
 #define WATERRING_TIME_UNIT_TEXT "s"
+#define OK_TEXT "OK"
 #define RIGHT_SYMBOL ">"
 #define LEFT_SYMBOL "<"
 #define LCD_ROWS 2
