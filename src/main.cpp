@@ -10,9 +10,11 @@ Michael Jonathan, February 2019
 ********************************************************/
 
 // select the pins used on the LCD panel
-LiquidCrystal lcd(D8, D9, D4, D5, D6, D7, A0);
-//LcdKeypadShield lcd = LcdKeypadShield::createByBoaard(WemosD1R1);
-
+//LiquidCrystal lcd(D7, D8, D3, D4, D5, D6); //Wemos D1 R2
+LiquidCrystal lcd(D8, D9, D4, D5, D6, D7);//Wemos D1 R1
+//LiquidCrystal lcd(D7, D9, D8, D9, D5, D6); //Wemos D1 R1
+//LiquidCrystal lcd(D5, D6, D1, D2, D3, D4); //Wemos D1 R2
+//LiquidCrystal lcd(8, 9, 4, 5, 6, 7); // Arduino Uno
 // define some values used by the panel and buttons
 int lcd_key     = 0;
 int adc_key_in  = 0;
@@ -43,6 +45,7 @@ int read_LCD_buttons()
 void setup()
 {
   Serial.begin(9600);
+  Serial.println("D1 Robot LCD Keypad Test");
   lcd.begin(16, 2);              // start the library
   lcd.setCursor(0, 0);
   lcd.print("Created By");
