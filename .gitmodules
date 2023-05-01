@@ -4,3 +4,6 @@
 [submodule "lib/Tasmota"]
 	path = lib/Tasmota
 	url = https://github.com/arendst/Tasmota.git
+[submodule "lib/Arduino-cmd-processing"]
+	path = lib/Arduino-cmd-processing
+	url = git@github.com:shadowroot/Arduino-cmd-processing.git
