@@ -21,8 +21,7 @@ class KeypadLCDControl{
     public:
         #ifdef ESP8266
             KeypadLCDControl() : lcd(D8, D9, D4, D5, D6, D7), buttonPin(PIN_A0) {}
-        #endif
-        #ifdef ARDUINO_AVR_UNO
+        #else
             KeypadLCDControl() : lcd(8, 9, 4, 5, 6, 7), buttonPin(PIN_A0) {}
         #endif
         ButtonPressed read_LCD_buttons();
@@ -66,19 +65,6 @@ class KeypadLCDControl{
         ButtonPressed previousKey;
         unsigned long lastReadTime;
 };
-
-// select the pins used on the LCD panel
-/*
-#ifdef ESP8266
-LiquidCrystal lcd(D8, D9, D4, D5, D6, D7);//Wemos D1 R1
-#endif
-
-#ifdef ARDUINO_AVR_UNO
-LiquidCrystal lcd(8, 9, 4, 5, 6, 7); // Arduino Uno
-#endif
-*/
-
-
 
 // read the buttons
 ButtonPressed KeypadLCDControl::read_LCD_buttons()

@@ -222,4 +222,35 @@ class MoistureSensorPower : public Relay{
         MoistureSensorPower(int pin, Log * log, const char * name = "moisturepower") :  Relay(pin, log, name) {}
 };
 
+class AnalogReader{
+    public:
+        AnalogReader(int pin, Log * log, AsyncComm * asyncComm, const char * name = "AnalogReader") : pin(pin), log(log), asyncComm(asyncComm), name(name) {}
+        void setup_hook();
+        void loop_hook(){}
+        void setPin(int pin){
+            this->pin = pin;
+            pinMode(pin, INPUT);
+        }
+        void readValue();
+    protected:
+        int pin;
+        Log * log;
+        AsyncComm * asyncComm;
+        const char * name;
+};
+
+void AnalogReader::setup_hook(){
+    setPin(pin);
+    log->info("AnalogReader %s setup", name);
+}
+
+void AnalogReader::readValue(){
+    log->debug("AnalogReader %s hook", name);
+    int value = analogRead(pin);
+    asyncComm->createRPCMessage();
+    asyncComm->addRPCResult(value);
+    asyncComm->sendMsg();
+}
+
+
 #endif
