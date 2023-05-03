@@ -1,9 +1,10 @@
-#ifndef WATTERING_H
-#define WATTERING_H
+#ifndef Waterring_H
+#define Waterring_H
 #include "keypadlcd.h"
+#include "comm.h"
 #include <Arduino.h>
 
-enum WatteringState{
+enum WaterringState{
     MANUAL_OFF,
     MANUAL_ON,
     MANUAL_CYCLE,
@@ -19,71 +20,73 @@ enum SensorsState{
 };
 
 /**
- * @brief WatteringState class
+ * @brief WaterringState class
 */
-class Wattering{
+class Waterring{
     public:
-        Wattering(const SoilMoistureSensor& soilMoistureSensor1, const SoilMoistureSensor& soilMoistureSensor2, const Pump& pump) : currentWatteringState(AUTOMATED), soilMoistureSensor1(soilMoistureSensor1), soilMoistureSensor2(soilMoistureSensor2), pump(pump){}
+        Waterring( Pump* pump, SoilMoistureSensor* soilMoistureSensor1 = NULL, SoilMoistureSensor* soilMoistureSensor2 = NULL) : currentWaterringState(AUTOMATED), soilMoistureSensor1(soilMoistureSensor1), soilMoistureSensor2(soilMoistureSensor2), pump(pump){}
         void setup_hook();
         void loop_hook();
-        WatteringState getWatteringState(){
-            return currentWatteringState;
+        WaterringState getWaterringState(){
+            return currentWaterringState;
         }
-        void setWatteringCycleSeconds(unsigned long wateringCycleSeconds){
+        void setWaterringCycleSeconds(unsigned long wateringCycleSeconds){
             this->wateringCycleSeconds = wateringCycleSeconds;
         }
         void manualOn(){
-            currentWatteringState = MANUAL_ON;
-            pump.on();
+            currentWaterringState = MANUAL_ON;
+            pump->on();
         }
         void manualOff(){
-            currentWatteringState = MANUAL_OFF;
-            pump.off();
+            currentWaterringState = MANUAL_OFF;
+            pump->off();
         }
         void manualCycle(){
-            currentWatteringState = MANUAL_CYCLE;
-            pump.on();
+            currentWaterringState = MANUAL_CYCLE;
+            pump->on();
             startWateringTime = millis();
         }
-        int getWatteringCycleSeconds(){
+        int getWaterringCycleSeconds(){
             return wateringCycleSeconds;
         }
-        void setWatteringCycleSeconds(int wateringCycleSeconds){
+        void setWaterringCycleSeconds(int wateringCycleSeconds){
             this->wateringCycleSeconds = wateringCycleSeconds;
         }
     private:
-        WatteringState currentWatteringState;
+        WaterringState currentWaterringState;
         unsigned long startWateringTime;
         unsigned long lastWateringTime;
         unsigned long wateringCycleSeconds;
-        SoilMoistureSensor soilMoistureSensor1;
-        SoilMoistureSensor soilMoistureSensor2;
-        Pump pump;
+        SoilMoistureSensor *soilMoistureSensor1;
+        SoilMoistureSensor *soilMoistureSensor2;
+        Pump *pump;
         SensorsState sensorsState;
+        WaterringComm *waterringComm;
+        Log * log;
 };
 
-void Wattering::setup_hook(){
+void Waterring::setup_hook(){
     Serial.begin(SERIAL_BAUD_RATE);
-    soilMoistureSensor1.setup_hook();
-    soilMoistureSensor2.setup_hook();
+    soilMoistureSensor1->setup_hook();
+    soilMoistureSensor2->setup_hook();
 }
 
-void Wattering::loop_hook(){
-    soilMoistureSensor1.loop_hook();
-    soilMoistureSensor2.loop_hook();
-    switch(currentWatteringState){
+void Waterring::loop_hook(){
+    soilMoistureSensor1->loop_hook();
+    soilMoistureSensor2->loop_hook();
+    switch(currentWaterringState){
         case AUTOMATED_WATERING:
             if(millis() - startWateringTime > wateringCycleSeconds * 1000){
-                currentWatteringState = AUTOMATED;
-                pump.off();
+                currentWaterringState = AUTOMATED;
+                pump->off();
                 //either not working or disconnected
-                if(soilMoistureSensor1.isError() && soilMoistureSensor2.isError()){
+                if((soilMoistureSensor1 && soilMoistureSensor1->isError()) && (soilMoistureSensor2 && soilMoistureSensor2->isError())){
                     sensorsState = FAIL_ALL_SENSORS;
                 }
-                else if(soilMoistureSensor1.isError()){
+                else if(soilMoistureSensor1 && soilMoistureSensor1->isError()){
                     sensorsState = FAIL_SENSOR1;
                 }
-                else if(soilMoistureSensor2.isError()){
+                else if(soilMoistureSensor2 && soilMoistureSensor2->isError()){
                     sensorsState = FAIL_SENSOR2;
                 }
                 else{
@@ -93,26 +96,26 @@ void Wattering::loop_hook(){
             }
             break;
         case AUTOMATED:
-            if(soilMoistureSensor1.isDry() || soilMoistureSensor2.isDry()){
-                currentWatteringState = AUTOMATED_WATERING;
-                soilMoistureSensor1.savePercentage();
-                soilMoistureSensor2.savePercentage();
-                pump.on();
+            if((soilMoistureSensor1 && soilMoistureSensor1->isDry()) || (soilMoistureSensor2 && soilMoistureSensor2->isDry())){
+                currentWaterringState = AUTOMATED_WATERING;
+                soilMoistureSensor1->savePercentage();
+                soilMoistureSensor2->savePercentage();
+                pump->on();
                 startWateringTime = millis();
             }
             else if(millis() - lastWateringTime > wateringCycleSeconds * 1000){
-                currentWatteringState = AUTOMATED_WATERING;
-                soilMoistureSensor1.savePercentage();
-                soilMoistureSensor2.savePercentage();
-                pump.on();
+                currentWaterringState = AUTOMATED_WATERING;
+                if(soilMoistureSensor1) soilMoistureSensor1->savePercentage();
+                if(soilMoistureSensor2) soilMoistureSensor2->savePercentage();
+                pump->on();
                 startWateringTime = millis();
             }
             break;
         case MANUAL_CYCLE:
             if(millis() - startWateringTime > wateringCycleSeconds * 1000){
-                pump.off();
+                pump->off();
                 lastWateringTime = millis();
-                currentWatteringState = AUTOMATED;
+                currentWaterringState = AUTOMATED;
             }
             break;
     }
@@ -163,38 +166,60 @@ void SoilMoistureSensor::getSoilMoisture(){
     }
 }
 
-class Pump{
+class Relay{
     public:
-        Pump(int pin) : pin(pin) {}
+        Relay(int pin, Log* log, const char * name = "relay"): log(log), name(name){
+            setPin(pin);
+        }
         void setup_hook();
         void loop_hook();
         void on();
         void off();
-    private:
+        void setPin(int pin){
+            this->pin = pin;
+            pinMode(pin, OUTPUT);
+        }
+    protected:
         int pin;
         unsigned long lastRunning;
         unsigned long runningTime;
         bool running;
+        const char * name;
+        Log* log;
 };
 
-void Pump::setup_hook(){
-    pinMode(pin, OUTPUT);
+void Relay::setup_hook(){
+    log->info("Relay %s setup", name);
 }
 
-void Pump::loop_hook(){
+void Relay::loop_hook(){
+    log->debug("Relay %s hook", name);
 }
 
-void Pump::on(){
+void Relay::on(){
     digitalWrite(pin, HIGH);
     lastRunning = millis();
     running = true;
+    log->debug("Relay %s set on", name);
 }
 
-void Pump::off(){
+void Relay::off(){
     digitalWrite(pin, LOW);
     runningTime = millis() - lastRunning;
     running = false;
+    log->debug("Relay %s set off", name);
 }
 
+
+class Pump : public Relay{
+    public:
+        Pump(int pin, Log * log, const char * name = "pump") :  Relay(pin, log, name) {}
+};
+
+
+class MoistureSensorPower : public Relay{
+    public:
+        MoistureSensorPower(int pin, Log * log, const char * name = "moisturepower") :  Relay(pin, log, name) {}
+};
 
 #endif
