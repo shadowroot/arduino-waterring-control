@@ -184,7 +184,7 @@ void AnalogReader::readValueRPC(){
 */
 class Waterring{
     public:
-        Waterring(WaterringComm * waterringComm, Pump* pump, SoilMoistureSensor* soilMoistureSensor1 = NULL, SoilMoistureSensor* soilMoistureSensor2 = NULL) : waterringComm(waterringComm), currentWaterringState(AUTOMATED), soilMoistureSensor1(soilMoistureSensor1), soilMoistureSensor2(soilMoistureSensor2), pump(pump){}
+        Waterring(WaterringComm * waterringComm, Pump* pump, SoilMoistureSensor* soilMoistureSensor1 = NULL, SoilMoistureSensor* soilMoistureSensor2 = NULL) : waterringComm(waterringComm), currentWaterringState(AUTOMATED), soilMoistureSensor1(soilMoistureSensor1), soilMoistureSensor2(soilMoistureSensor2), pump(pump), waterringTimeSeconds(60){}
         void setup_hook();
         void loop_hook();
         WaterringState getWaterringState(){
@@ -206,16 +206,29 @@ class Waterring{
             pump->on();
             startWateringTime = millis();
         }
+        void automatedOn(){
+            currentWaterringState = AUTOMATED;
+        }
+        void runManualCycle(){
+            currentWaterringState = MANUAL_CYCLE;
+        }
         int getWaterringCycleSeconds(){
             return wateringCycleSeconds;
         }
         void setWaterringCycleSeconds(int wateringCycleSeconds){
             this->wateringCycleSeconds = wateringCycleSeconds;
         }
+        void setWaterringTimeSeconds(int waterringTimeSeconds){
+            this->waterringTimeSeconds = waterringTimeSeconds;
+        }
+        int getWaterringTimeSeconds(){
+            return waterringTimeSeconds;
+        }
     private:
         WaterringState currentWaterringState;
         unsigned long startWateringTime;
         unsigned long lastWateringTime;
+        int waterringTimeSeconds;
         unsigned long wateringCycleSeconds;
         unsigned long tmpWateringCycleSeconds;
         SoilMoistureSensor *soilMoistureSensor1;
@@ -271,7 +284,7 @@ void Waterring::loop_hook(){
             }
             break;
         case MANUAL_CYCLE:
-            if(millis() - startWateringTime > wateringCycleSeconds * 1000){
+            if(millis() - startWateringTime > waterringTimeSeconds * 1000){
                 pump->off();
                 lastWateringTime = millis();
                 currentWaterringState = AUTOMATED;
