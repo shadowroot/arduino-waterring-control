@@ -1,8 +1,8 @@
-
 #ifndef MENU_H
 #define MENU_H
+
 #include "keypadlcd.h"
-#include "watering.h"
+#include "waterring.h"
 #include <Arduino.h>
 
 enum MenuItem{
@@ -35,7 +35,7 @@ class Menu{
         void waterringCycleMenuPrint(){
             keypadLCDControl->printTextUp(SET_WATERRING_CYCLE_TEXT);
             keypadLCDControl->getLCD().setCursor(0,1);
-            keypadLCDControl->getLCD().print(waterringState->getWatteringCycleSeconds());
+            keypadLCDControl->getLCD().print(waterringState->getWaterringCycleSeconds());
             keypadLCDControl->getLCD().print(WATERRING_TIME_UNIT_TEXT);
         }
         void waterringCycleMenuKeys();
@@ -96,14 +96,14 @@ void Menu::navKeys(){
         previousMenuItem = currentMenuItem;
         currentMenuItem = static_cast<MenuItem>((static_cast<int>(currentMenuItem) - 1) % sizeof(MenuItem));
         if(currentMenuItem == MenuItem::WATERRING_CYCLE){
-            tmpWaterringCycleSeconds = waterringState->getWatteringCycleSeconds();
+            tmpWaterringCycleSeconds = waterringState->getWaterringCycleSeconds();
         }
         keypadLCDControl->clear();
     }else if(keypadLCDControl->keyPressed() == ButtonPressed::RIGHT){
         previousMenuItem = currentMenuItem;
         currentMenuItem = static_cast<MenuItem>((static_cast<int>(currentMenuItem) + 1) % sizeof(MenuItem));
         if(currentMenuItem == MenuItem::WATERRING_CYCLE){
-            tmpWaterringCycleSeconds = waterringState->getWatteringCycleSeconds();
+            tmpWaterringCycleSeconds = waterringState->getWaterringCycleSeconds();
         }
         keypadLCDControl->clear();
     }
@@ -133,7 +133,7 @@ void Menu::waterringStopMenuPrint(){
 
 void Menu::initialMenu(){
     keypadLCDControl->printTextUp(WATER_BOOT_TEXT);
-    if(waterringState->getWatteringState() == AUTOMATED || waterringState->getWatteringState() == AUTOMATED_WATERING){
+    if(waterringState->getWaterringState() == AUTOMATED || waterringState->getWaterringState() == AUTOMATED_WATERING){
         keypadLCDControl->printTextDown(WATER_MODE_AUTO_TEXT);
     }else{
         keypadLCDControl->printTextDown(WATER_MODE_MANUAL_TEXT);
@@ -176,7 +176,7 @@ void Menu::waterringCycleMenuKeys(){
             break;
         case ButtonPressed::SELECT:
             keypadLCDControl->printTextDown(OK_TEXT);
-            waterringState->setWatteringCycleSeconds(tmpWaterringCycleSeconds);
+            waterringState->setWaterringCycleSeconds(tmpWaterringCycleSeconds);
             delay(1000);
             currentMenuItem = MenuItem::INITIAL;
             break;

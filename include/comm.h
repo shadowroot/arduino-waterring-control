@@ -4,21 +4,23 @@
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
-#include "log.h"
+#include "logger.h"
 #include "async_comm.h"
 
 class WaterringComm : public AsyncComm {
-    WaterringComm(Stream* io, DynamicJsonDocument* doc, Log* log): AsyncComm(io, doc, log){}
-    virtual void processLog();
+    WaterringComm(Stream* io, DynamicJsonDocument* doc, Logger* _logger, const char * deviceName = "unknown"): AsyncComm(io, doc, deviceName){
+        this->setLogger(_logger);
+    }
+    virtual void processLogger();
     virtual void processEvent();
 };
 
-void WaterringComm::processLog(){
-    log->info("Processing log");
+void WaterringComm::processLogger(){
+    logger->info("Processing log");
 }
 
 void WaterringComm::processEvent(){
-    log->info("Processing event");
+    logger->info("Processing event");
 }
 
 #endif // COMM_H

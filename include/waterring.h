@@ -20,12 +20,174 @@ enum SensorsState{
     OK,
 };
 
+
+//start of sensor and actuators
+
+class SoilMoistureSensor{
+    public:
+        SoilMoistureSensor(int pin, Logger * log, AsyncComm * asyncComm, const char * name = "Soil_moisture_sensor", int readIntervalSeconds=1800, int treashold=40) : pin(pin), log(log), asyncComm(asyncComm), name(name), readIntervalSeconds(readIntervalSeconds), lastRead(0), treashold(treashold) {}
+        void setup_hook();
+        void loop_hook();
+        void getSoilMoisture();
+        int getPercentage(){
+            return percentage;
+        }
+        bool isDry(){
+            return percentage <= treashold;
+        }
+        void savePercentage(){
+            lastPercentage = percentage;
+        }
+        bool isError(){
+            return lastPercentage <= percentage;
+        }
+    private:
+        int pin;
+        int percentage;
+        unsigned long lastRead;
+        int treashold;
+        int readIntervalSeconds;
+        int lastPercentage;
+        Logger * log;
+        AsyncComm * asyncComm;
+        const char * name;
+};
+
+void SoilMoistureSensor::setup_hook(){
+    pinMode(pin, INPUT);
+}
+
+void SoilMoistureSensor::loop_hook(){
+    getSoilMoisture();
+}
+
+void SoilMoistureSensor::getSoilMoisture(){
+    if(millis() - lastRead < (readIntervalSeconds * 1000)){
+        int analogValue = analogRead(pin);
+        percentage = map(analogValue, 0, 1023, 0, 100);
+        //creating and sending event message
+        asyncComm->createEventMessage();
+        asyncComm->addMessageField("device", name);
+        asyncComm->addMessageField("moisture_percentage", percentage);
+        asyncComm->addMessageField("moisture_raw", analogValue);
+        asyncComm->sendMsg();
+        //end of creating and sending event message
+        log->debug("Soil moisture sensor %s read: %d", name, percentage);
+
+        lastRead = millis();
+    }
+}
+
+class Relay{
+    public:
+        Relay(int pin, Logger* log, AsyncComm * asyncComm, const char * name = "relay"): pin(pin), log(log), asyncComm(asyncComm), name(name){
+            setPin(pin);
+        }
+        void setup_hook();
+        void loop_hook();
+        void on();
+        void off();
+        void setPin(int pin){
+            this->pin = pin;
+            pinMode(pin, OUTPUT);
+        }
+        unsigned long getRunningTime(){
+            return millis() - runningTime;
+        }
+    protected:
+        int pin;
+        unsigned long lastRunning;
+        unsigned long runningTime;
+        bool running;
+        const char * name;
+        Logger* log;
+        AsyncComm * asyncComm;
+};
+
+void Relay::setup_hook(){
+    log->info("Relay %s setup", name);
+}
+
+void Relay::loop_hook(){
+    log->debug("Relay %s hook", name);
+}
+
+void Relay::on(){
+    log->debug("Relay %s set on", name);
+    digitalWrite(pin, HIGH);
+    lastRunning = millis();
+    running = true;
+    //creating and sending event message
+    asyncComm->createEventMessage();
+    asyncComm->addMessageField("device", name);
+    asyncComm->addMessageField("state", "on");
+    asyncComm->sendMsg();
+    //end of creating and sending event message
+}
+
+void Relay::off(){
+    log->debug("Relay %s set off", name);
+    digitalWrite(pin, LOW);
+    runningTime = millis() - lastRunning;
+    running = false;
+    //creating and sending event message
+    asyncComm->createEventMessage();
+    asyncComm->addMessageField("device", name);
+    asyncComm->addMessageField("state", "off");
+    asyncComm->sendMsg();
+    //end of creating and sending event message
+}
+
+
+class Pump : public Relay{
+    public:
+        Pump(int pin, Logger * log, AsyncComm * asyncComm, const char * name = "pump") : Relay(pin, log, asyncComm, name) {}
+};
+
+
+class MoistureSensorPower : public Relay{
+    public:
+        MoistureSensorPower(int pin, Logger * log, AsyncComm * asyncComm, const char * name = "moisturepower") : Relay(pin, log, asyncComm, name) {}
+};
+
+class AnalogReader{
+    public:
+        AnalogReader(int pin, Logger * log, AsyncComm * asyncComm, const char * name = "AnalogReader") : pin(pin), log(log), asyncComm(asyncComm), name(name) {}
+        void setup_hook();
+        void loop_hook(){}
+        void setPin(int pin){
+            this->pin = pin;
+            pinMode(pin, INPUT);
+        }
+        void readValueRPC();
+    protected:
+        int pin;
+        Logger * log;
+        AsyncComm * asyncComm;
+        const char * name;
+};
+
+void AnalogReader::setup_hook(){
+    log->info("AnalogReader %s setup", name);
+    setPin(pin);
+}
+
+void AnalogReader::readValueRPC(){
+    log->debug("AnalogReader %s hook", name);
+    int value = analogRead(pin);
+    asyncComm->createRPCMessage();
+    asyncComm->addRPCResult(value);
+    asyncComm->sendMsg();
+}
+
+//end of sensors
+
 /**
  * @brief WaterringState class
 */
 class Waterring{
     public:
-        Waterring( Pump* pump, SoilMoistureSensor* soilMoistureSensor1 = NULL, SoilMoistureSensor* soilMoistureSensor2 = NULL) : currentWaterringState(AUTOMATED), soilMoistureSensor1(soilMoistureSensor1), soilMoistureSensor2(soilMoistureSensor2), pump(pump){}
+        Waterring( Logger * log, WaterringComm * waterringComm, Pump* pump, SoilMoistureSensor* soilMoistureSensor1 = NULL, SoilMoistureSensor* soilMoistureSensor2 = NULL) : log(log), waterringComm(waterringComm), currentWaterringState(AUTOMATED), soilMoistureSensor1(soilMoistureSensor1), soilMoistureSensor2(soilMoistureSensor2), pump(pump){}
         void setup_hook();
         void loop_hook();
         WaterringState getWaterringState(){
@@ -64,7 +226,7 @@ class Waterring{
         Pump *pump;
         SensorsState sensorsState;
         WaterringComm *waterringComm;
-        Log * log;
+        Logger * log;
 };
 
 void Waterring::setup_hook(){
@@ -124,135 +286,6 @@ void Waterring::loop_hook(){
 }
 
 
-
-class SoilMoistureSensor{
-    public:
-        SoilMoistureSensor(int pin, int readIntervalSeconds=1800, int treashold=40) : pin(pin), readIntervalSeconds(readIntervalSeconds), lastRead(0), treashold(treashold) {}
-        void setup_hook();
-        void loop_hook();
-        void getSoilMoisture();
-        int getPercentage(){
-            return percentage;
-        }
-        bool isDry(){
-            return percentage <= treashold;
-        }
-        void savePercentage(){
-            lastPercentage = percentage;
-        }
-        bool isError(){
-            return lastPercentage <= percentage;
-        }
-    private:
-        int pin;
-        int percentage;
-        unsigned long lastRead;
-        int treashold;
-        int readIntervalSeconds;
-        int lastPercentage;
-};
-
-void SoilMoistureSensor::setup_hook(){
-    pinMode(pin, INPUT);
-}
-
-void SoilMoistureSensor::loop_hook(){
-    getSoilMoisture();
-}
-
-void SoilMoistureSensor::getSoilMoisture(){
-    if(millis() - lastRead < (readIntervalSeconds * 1000)){
-        int analogValue = analogRead(pin);
-        percentage = map(analogValue, 0, 1023, 0, 100);
-        lastRead = millis();
-    }
-}
-
-class Relay{
-    public:
-        Relay(int pin, Log* log, const char * name = "relay"): log(log), name(name){
-            setPin(pin);
-        }
-        void setup_hook();
-        void loop_hook();
-        void on();
-        void off();
-        void setPin(int pin){
-            this->pin = pin;
-            pinMode(pin, OUTPUT);
-        }
-    protected:
-        int pin;
-        unsigned long lastRunning;
-        unsigned long runningTime;
-        bool running;
-        const char * name;
-        Log* log;
-};
-
-void Relay::setup_hook(){
-    log->info("Relay %s setup", name);
-}
-
-void Relay::loop_hook(){
-    log->debug("Relay %s hook", name);
-}
-
-void Relay::on(){
-    digitalWrite(pin, HIGH);
-    lastRunning = millis();
-    running = true;
-    log->debug("Relay %s set on", name);
-}
-
-void Relay::off(){
-    digitalWrite(pin, LOW);
-    runningTime = millis() - lastRunning;
-    running = false;
-    log->debug("Relay %s set off", name);
-}
-
-
-class Pump : public Relay{
-    public:
-        Pump(int pin, Log * log, const char * name = "pump") :  Relay(pin, log, name) {}
-};
-
-
-class MoistureSensorPower : public Relay{
-    public:
-        MoistureSensorPower(int pin, Log * log, const char * name = "moisturepower") :  Relay(pin, log, name) {}
-};
-
-class AnalogReader{
-    public:
-        AnalogReader(int pin, Log * log, AsyncComm * asyncComm, const char * name = "AnalogReader") : pin(pin), log(log), asyncComm(asyncComm), name(name) {}
-        void setup_hook();
-        void loop_hook(){}
-        void setPin(int pin){
-            this->pin = pin;
-            pinMode(pin, INPUT);
-        }
-        void readValue();
-    protected:
-        int pin;
-        Log * log;
-        AsyncComm * asyncComm;
-        const char * name;
-};
-
-void AnalogReader::setup_hook(){
-    setPin(pin);
-    log->info("AnalogReader %s setup", name);
-}
-
-void AnalogReader::readValue(){
-    log->debug("AnalogReader %s hook", name);
-    int value = analogRead(pin);
-    asyncComm->createRPCMessage();
-    asyncComm->addRPCResult(value);
-    asyncComm->sendMsg();
-}
 
 
 #endif //WATERING_H
