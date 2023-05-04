@@ -23,6 +23,29 @@ enum SensorsState{
 
 //start of sensor and actuators
 
+class AsyncCommDevice{
+    public:
+        AsyncCommDevice(AsyncComm * asyncComm, const char * name = "AsyncCommDevice") : asyncComm(asyncComm), name(name) {}
+        virtual void processEvent(){
+            if(asyncComm->isEvent()){
+                asyncComm->logInfo("Processing event");
+                if(strcmp(asyncComm->getDoc()["to"], name) == 0){
+                    determineAction();
+                }
+            }
+        }
+        virtual void determineAction(){
+            isProcessed = false;
+        }
+        bool isProcessedSuccessfully(){
+            return isProcessed;
+        }
+    protected:
+        AsyncComm * asyncComm;
+        const char * name;
+        bool isProcessed;
+};
+
 class SoilMoistureSensor{
     public:
         SoilMoistureSensor(int pin, AsyncComm * asyncComm, const char * name = "Soil_moisture_sensor", int readIntervalSeconds=1800, int treashold=40) : pin(pin), asyncComm(asyncComm), name(name), readIntervalSeconds(readIntervalSeconds), lastRead(0), treashold(treashold) {}
