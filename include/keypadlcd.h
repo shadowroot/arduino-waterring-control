@@ -33,8 +33,14 @@ class KeypadLCDControl{
         void clear(){
           lcd.clear();
         }
-        void printTextUp(const char * text);
-        void printTextDown(const char * text);
+        void printTextUp(const char * text){
+          lcd.setCursor(1,0);
+          lcd.print(text);
+        }
+        void printTextDown(const char * text){
+          lcd.setCursor(0,1);
+          lcd.print(text);
+        }
         int findTextMiddle(const char * text){
           int len = strlen(text);
           if(len > LCD_COLS-2){

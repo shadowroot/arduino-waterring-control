@@ -25,7 +25,7 @@ enum SensorsState{
 
 class SoilMoistureSensor{
     public:
-        SoilMoistureSensor(int pin, Logger * log, AsyncComm * asyncComm, const char * name = "Soil_moisture_sensor", int readIntervalSeconds=1800, int treashold=40) : pin(pin), log(log), asyncComm(asyncComm), name(name), readIntervalSeconds(readIntervalSeconds), lastRead(0), treashold(treashold) {}
+        SoilMoistureSensor(int pin, AsyncComm * asyncComm, const char * name = "Soil_moisture_sensor", int readIntervalSeconds=1800, int treashold=40) : pin(pin), asyncComm(asyncComm), name(name), readIntervalSeconds(readIntervalSeconds), lastRead(0), treashold(treashold) {}
         void setup_hook();
         void loop_hook();
         void getSoilMoisture();
@@ -48,7 +48,6 @@ class SoilMoistureSensor{
         int treashold;
         int readIntervalSeconds;
         int lastPercentage;
-        Logger * log;
         AsyncComm * asyncComm;
         const char * name;
 };
@@ -72,7 +71,7 @@ void SoilMoistureSensor::getSoilMoisture(){
         asyncComm->addMessageField("moisture_raw", analogValue);
         asyncComm->sendMsg();
         //end of creating and sending event message
-        log->debug("Soil moisture sensor %s read: %d", name, percentage);
+        asyncComm->logDebug("Soil moisture sensor %s read: %d", name, percentage);
 
         lastRead = millis();
     }
@@ -80,7 +79,7 @@ void SoilMoistureSensor::getSoilMoisture(){
 
 class Relay{
     public:
-        Relay(int pin, Logger* log, AsyncComm * asyncComm, const char * name = "relay"): pin(pin), log(log), asyncComm(asyncComm), name(name){
+        Relay(int pin, AsyncComm * asyncComm, const char * name = "relay"): pin(pin), asyncComm(asyncComm), name(name){
             setPin(pin);
         }
         void setup_hook();
@@ -100,20 +99,19 @@ class Relay{
         unsigned long runningTime;
         bool running;
         const char * name;
-        Logger* log;
         AsyncComm * asyncComm;
 };
 
 void Relay::setup_hook(){
-    log->info("Relay %s setup", name);
+    asyncComm->logInfo("Relay %s setup", name);
 }
 
 void Relay::loop_hook(){
-    log->debug("Relay %s hook", name);
+    asyncComm->logInfo("Relay %s hook", name);
 }
 
 void Relay::on(){
-    log->debug("Relay %s set on", name);
+    asyncComm->logDebug("Relay %s set on", name);
     digitalWrite(pin, HIGH);
     lastRunning = millis();
     running = true;
@@ -126,7 +124,7 @@ void Relay::on(){
 }
 
 void Relay::off(){
-    log->debug("Relay %s set off", name);
+    asyncComm->logDebug("Relay %s set off", name);
     digitalWrite(pin, LOW);
     runningTime = millis() - lastRunning;
     running = false;
@@ -141,18 +139,18 @@ void Relay::off(){
 
 class Pump : public Relay{
     public:
-        Pump(int pin, Logger * log, AsyncComm * asyncComm, const char * name = "pump") : Relay(pin, log, asyncComm, name) {}
+        Pump(int pin, AsyncComm * asyncComm, const char * name = "pump") : Relay(pin, asyncComm, name) {}
 };
 
 
 class MoistureSensorPower : public Relay{
     public:
-        MoistureSensorPower(int pin, Logger * log, AsyncComm * asyncComm, const char * name = "moisturepower") : Relay(pin, log, asyncComm, name) {}
+        MoistureSensorPower(int pin, AsyncComm * asyncComm, const char * name = "moisturepower") : Relay(pin, asyncComm, name) {}
 };
 
 class AnalogReader{
     public:
-        AnalogReader(int pin, Logger * log, AsyncComm * asyncComm, const char * name = "AnalogReader") : pin(pin), log(log), asyncComm(asyncComm), name(name) {}
+        AnalogReader(int pin, AsyncComm * asyncComm, const char * name = "AnalogReader") : pin(pin), asyncComm(asyncComm), name(name) {}
         void setup_hook();
         void loop_hook(){}
         void setPin(int pin){
@@ -162,18 +160,17 @@ class AnalogReader{
         void readValueRPC();
     protected:
         int pin;
-        Logger * log;
         AsyncComm * asyncComm;
         const char * name;
 };
 
 void AnalogReader::setup_hook(){
-    log->info("AnalogReader %s setup", name);
+    asyncComm->logInfo("AnalogReader %s setup", name);
     setPin(pin);
 }
 
 void AnalogReader::readValueRPC(){
-    log->debug("AnalogReader %s hook", name);
+    asyncComm->logDebug("AnalogReader %s hook", name);
     int value = analogRead(pin);
     asyncComm->createRPCMessage();
     asyncComm->addRPCResult(value);
@@ -187,7 +184,7 @@ void AnalogReader::readValueRPC(){
 */
 class Waterring{
     public:
-        Waterring( Logger * log, WaterringComm * waterringComm, Pump* pump, SoilMoistureSensor* soilMoistureSensor1 = NULL, SoilMoistureSensor* soilMoistureSensor2 = NULL) : log(log), waterringComm(waterringComm), currentWaterringState(AUTOMATED), soilMoistureSensor1(soilMoistureSensor1), soilMoistureSensor2(soilMoistureSensor2), pump(pump){}
+        Waterring(WaterringComm * waterringComm, Pump* pump, SoilMoistureSensor* soilMoistureSensor1 = NULL, SoilMoistureSensor* soilMoistureSensor2 = NULL) : waterringComm(waterringComm), currentWaterringState(AUTOMATED), soilMoistureSensor1(soilMoistureSensor1), soilMoistureSensor2(soilMoistureSensor2), pump(pump){}
         void setup_hook();
         void loop_hook();
         WaterringState getWaterringState(){
@@ -226,11 +223,9 @@ class Waterring{
         Pump *pump;
         SensorsState sensorsState;
         WaterringComm *waterringComm;
-        Logger * log;
 };
 
 void Waterring::setup_hook(){
-    Serial.begin(SERIAL_BAUD_RATE);
     soilMoistureSensor1->setup_hook();
     soilMoistureSensor2->setup_hook();
 }
