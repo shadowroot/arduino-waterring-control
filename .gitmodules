@@ -1,3 +1,4 @@
 [submodule "lib/Arduino-cmd-processing"]
 	path = lib/Arduino-cmd-processing
 	url = git@github.com:shadowroot/Arduino-cmd-processing.git
+	branch = dev

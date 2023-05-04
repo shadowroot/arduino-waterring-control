@@ -1,5 +1,6 @@
-#ifndef Waterring_H
-#define Waterring_H
+#ifndef WATERRING_H
+#define WATERRING_H
+
 #include "keypadlcd.h"
 #include "comm.h"
 #include <Arduino.h>
@@ -57,6 +58,7 @@ class Waterring{
         unsigned long startWateringTime;
         unsigned long lastWateringTime;
         unsigned long wateringCycleSeconds;
+        unsigned long tmpWateringCycleSeconds;
         SoilMoistureSensor *soilMoistureSensor1;
         SoilMoistureSensor *soilMoistureSensor2;
         Pump *pump;
@@ -253,4 +255,4 @@ void AnalogReader::readValue(){
 }
 
 
-#endif
+#endif //WATERING_H
