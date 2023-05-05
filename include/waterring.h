@@ -188,18 +188,18 @@ void Relay::off(){
 
 class Pump : public Relay{
     public:
-        Pump(int pin, AsyncComm * asyncComm, const char * name = "pump") : Relay(pin, asyncComm, name) {}
+        Pump(int pin, AsyncComm * asyncComm, const char * deviceName = "pump") : Relay(pin, asyncComm, deviceName) {}
 };
 
 
 class MoistureSensorPower : public Relay{
     public:
-        MoistureSensorPower(int pin, AsyncComm * asyncComm, const char * name = "moisturepower") : Relay(pin, asyncComm, name) {}
+        MoistureSensorPower(int pin, AsyncComm * asyncComm, const char * deviceName = "moisturepower") : Relay(pin, asyncComm, deviceName) {}
 };
 
 class AnalogReader : public AsyncCommDevice{
     public:
-        AnalogReader(int pin, AsyncComm * asyncComm, const char * name = "AnalogReader") : pin(pin), AsyncCommDevice(asyncComm, name) {}
+        AnalogReader(int pin, AsyncComm * asyncComm, const char * deviceName = "AnalogReader") : pin(pin), AsyncCommDevice(asyncComm, deviceName) {}
         void setup_hook();
         void loop_hook(){
             processEvent();
@@ -317,6 +317,7 @@ class Waterring{
         int getWaterringTimeSeconds(){
             return waterringTimeSeconds;
         }
+        void waterringStateMachine();
     private:
         WaterringState currentWaterringState;
         unsigned long startWateringTime;
@@ -343,6 +344,10 @@ void Waterring::loop_hook(){
     soilMoistureSensor1->loop_hook();
     soilMoistureSensor2->loop_hook();
     pump->loop_hook();
+    waterringStateMachine();
+}
+
+void Waterring::waterringStateMachine(){
     switch(currentWaterringState){
         case AUTOMATED_WATERING:
             if(millis() - startWateringTime > wateringCycleSeconds * 1000){
@@ -389,8 +394,6 @@ void Waterring::loop_hook(){
             break;
     }
 }
-
-
 
 
 #endif //WATERING_H
