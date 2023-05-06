@@ -12,7 +12,7 @@ SoilMoistureSensor soilMoistureSensor1(SOIL_MOISTURE_SENSOR1_PIN, &waterringComm
 SoilMoistureSensor soilMoistureSensor2(SOIL_MOISTURE_SENSOR2_PIN, &waterringComm, "soil_moisture_sensor2");
 Pump pump(PUMP_PIN, &waterringComm, "main_water_pump");
 KeypadLCDControl keypadLCDControl;
-Waterring waterring(&waterringComm, &pump, &soilMoistureSensor1, &soilMoistureSensor2);
+WaterringPump2MoistureSensor waterring(&waterringComm, &pump, &soilMoistureSensor1, &soilMoistureSensor2);
 Menu menu(&keypadLCDControl, &waterring);
 
 void setup()

@@ -20,7 +20,7 @@ enum MenuItem{
 
 class Menu{
     public:
-        Menu(KeypadLCDControl* keypad, Waterring* waterringState) : currentMenuItem(MenuItem::INITIAL), keypadLCDControl(keypad), waterringState(waterringState) {}
+        Menu(KeypadLCDControl* keypad, WaterringPump2MoistureSensor* wattering) : currentMenuItem(MenuItem::INITIAL), keypadLCDControl(keypad), wattering(wattering) {}
         void setup_hook();
         void loop_hook();
         void printMenu();
@@ -38,7 +38,7 @@ class Menu{
         void waterringCycleMenuPrint(){
             keypadLCDControl->printTextUp(SET_WATERRING_CYCLE_TEXT);
             keypadLCDControl->getLCD().setCursor(0,1);
-            keypadLCDControl->getLCD().print(waterringState->getWaterringCycleSeconds());
+            keypadLCDControl->getLCD().print(wattering->getWaterringCycleSeconds());
             keypadLCDControl->getLCD().print(WATERRING_TIME_UNIT_TEXT);
         }
         void waterringCycleMenuKeys();
@@ -49,7 +49,7 @@ class Menu{
         MenuItem previousMenuItem;
         MenuItem currentMenuItem;
         KeypadLCDControl * keypadLCDControl;
-        Waterring * waterringState;
+        WaterringPump2MoistureSensor * wattering;
         unsigned long tmpWaterringCycleSeconds;
 };
 
@@ -100,14 +100,14 @@ void Menu::navKeys(){
         previousMenuItem = currentMenuItem;
         currentMenuItem = static_cast<MenuItem>((static_cast<int>(currentMenuItem) - 1) % sizeof(MenuItem));
         if(currentMenuItem == MenuItem::WATERRING_CYCLE_SETUP){
-            tmpWaterringCycleSeconds = waterringState->getWaterringCycleSeconds();
+            tmpWaterringCycleSeconds = wattering->getWaterringCycleSeconds();
         }
         keypadLCDControl->clear();
     }else if(keypadLCDControl->keyPressed() == ButtonPressed::RIGHT){
         previousMenuItem = currentMenuItem;
         currentMenuItem = static_cast<MenuItem>((static_cast<int>(currentMenuItem) + 1) % sizeof(MenuItem));
         if(currentMenuItem == MenuItem::WATERRING_CYCLE_SETUP){
-            tmpWaterringCycleSeconds = waterringState->getWaterringCycleSeconds();
+            tmpWaterringCycleSeconds = wattering->getWaterringCycleSeconds();
         }
         keypadLCDControl->clear();
     }
@@ -115,7 +115,7 @@ void Menu::navKeys(){
 
 void Menu::waterringStartMenuKeys(){
     if(keypadLCDControl->keyPressed() == ButtonPressed::SELECT){
-        waterringState->manualOn();
+        wattering->manualOn();
         keypadLCDControl->printTextDown(OK_TEXT);
         delay(1000);
         //switch to stop menu
@@ -126,7 +126,7 @@ void Menu::waterringStartMenuKeys(){
 
 void Menu::waterringStopMenuKeys(){
     if(keypadLCDControl->keyPressed() == ButtonPressed::SELECT){
-        waterringState->manualOff();
+        wattering->manualOff();
         keypadLCDControl->printTextDown(OK_TEXT);
     }
 }
@@ -137,7 +137,7 @@ void Menu::waterringStopMenuPrint(){
 
 void Menu::initialMenuPrint(){
     keypadLCDControl->printTextUp(WATER_BOOT_TEXT);
-    if(waterringState->getWaterringState() == AUTOMATED || waterringState->getWaterringState() == AUTOMATED_WATERING){
+    if(wattering->getWaterringState() == AUTOMATED || wattering->getWaterringState() == AUTOMATED_WATERING){
         keypadLCDControl->printTextDown(WATER_MODE_AUTO_TEXT);
     }else{
         keypadLCDControl->printTextDown(WATER_MODE_MANUAL_TEXT);
@@ -146,11 +146,11 @@ void Menu::initialMenuPrint(){
 
 void Menu::initialMenuKeys(){
     if(keypadLCDControl->keyPressed() == ButtonPressed::SELECT){
-        if(waterringState->getWaterringState() == AUTOMATED || waterringState->getWaterringState() == AUTOMATED_WATERING){
-            waterringState->manualOff();
+        if(wattering->getWaterringState() == AUTOMATED || wattering->getWaterringState() == AUTOMATED_WATERING){
+            wattering->manualOff();
             keypadLCDControl->printTextDown(WATER_MODE_MANUAL_TEXT);
         }else{
-            waterringState->automatedOn();
+            wattering->automatedOn();
             keypadLCDControl->printTextDown(WATER_MODE_AUTO_TEXT);
         }
     }
@@ -195,7 +195,7 @@ void Menu::waterringCycleMenuKeys(){
             break;
         case ButtonPressed::SELECT:
             keypadLCDControl->printTextDown(OK_TEXT);
-            waterringState->setWaterringCycleSeconds(tmpWaterringCycleSeconds);
+            wattering->setWaterringCycleSeconds(tmpWaterringCycleSeconds);
             delay(1000);
             currentMenuItem = MenuItem::INITIAL;
             break;
@@ -205,17 +205,17 @@ void Menu::waterringCycleMenuKeys(){
 void Menu::waterringTimeMenuPrint(){
     keypadLCDControl->printTextUp(SET_WATERRING_TIME_TEXT);
     keypadLCDControl->getLCD().setCursor(0,1);
-    keypadLCDControl->getLCD().print(waterringState->getWaterringTimeSeconds());
+    keypadLCDControl->getLCD().print(wattering->getWaterringTimeSeconds());
     keypadLCDControl->getLCD().print(WATERRING_TIME_UNIT_TEXT);
 }
 
 void Menu::waterringTimeMenuKeys(){
     switch(keypadLCDControl->keyPressed()){
         case ButtonPressed::UP:
-            waterringState->setWaterringTimeSeconds(waterringState->getWaterringTimeSeconds() + 1);
+            wattering->setWaterringTimeSeconds(wattering->getWaterringTimeSeconds() + 1);
             break;
         case ButtonPressed::DOWN:
-            waterringState->setWaterringTimeSeconds(waterringState->getWaterringTimeSeconds() - 1);
+            wattering->setWaterringTimeSeconds(wattering->getWaterringTimeSeconds() - 1);
             break;
         case ButtonPressed::SELECT:
             keypadLCDControl->printTextDown(OK_TEXT);
@@ -231,7 +231,7 @@ void Menu::waterringCycleRunMenuPrint(){
 
 void Menu::waterringCycleRunMenuKeys(){
     if(keypadLCDControl->keyPressed() == ButtonPressed::SELECT){
-        waterringState->runManualCycle();
+        wattering->runManualCycle();
         keypadLCDControl->printTextDown(OK_TEXT);
     }
 }

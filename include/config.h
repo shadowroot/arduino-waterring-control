@@ -24,3 +24,5 @@
 #define LEFT_SYMBOL "<"
 #define LCD_ROWS 2
 #define LCD_COLS 16
+
+#define OPTIMAL_SOIL_MOISTURE_PERCENT 60

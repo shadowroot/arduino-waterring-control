@@ -5,6 +5,7 @@
 #include "comm.h"
 #include <Arduino.h>
 #include <map>
+#include <vector>
 
 enum WaterringState{
     MANUAL_OFF,
@@ -27,7 +28,8 @@ enum SensorsState{
 class AsyncCommDevice{
     public:
         AsyncCommDevice(AsyncComm * asyncComm, const char * deviceName = "AsyncCommDevice") : asyncComm(asyncComm), deviceName(deviceName) {}
-        virtual void processEvent(){
+        //virtual void processEvent(){
+        void processEvent(){
             if(asyncComm->isEvent()){
                 asyncComm->logInfo("Processing event");
                 if(strcmp(asyncComm->getDoc()["to"], deviceName) == 0){
@@ -35,7 +37,8 @@ class AsyncCommDevice{
                 }
             }
         }
-        virtual void determineAction(){
+        //virtual void determineAction(){
+        void determineAction(){
             const char * action = asyncComm->getDocKey("action"); 
             if( action != NULL){
                 if(isActionPresent(action)){
@@ -130,8 +133,8 @@ class Relay: public AsyncCommDevice{
         }
         void setup_hook();
         void loop_hook();
-        void on();
-        void off();
+        virtual void on();
+        virtual void off();
         void setPin(int pin){
             this->pin = pin;
             pinMode(pin, OUTPUT);
@@ -188,7 +191,30 @@ void Relay::off(){
 
 class Pump : public Relay{
     public:
-        Pump(int pin, AsyncComm * asyncComm, const char * deviceName = "pump") : Relay(pin, asyncComm, deviceName) {}
+        Pump(int pin, AsyncComm * asyncComm, const char * deviceName = "pump", int troughtput_l_min = 900) : Relay(pin, asyncComm, deviceName), troughtput_l_min(troughtput_l_min) {}
+        virtual void on(){
+            Relay* _this = this;
+            _this->on();
+            pumpStartTime = millis();
+            //collect statistics
+        }
+        virtual void off(){
+            Relay* _this = this;
+            _this->off();
+            pumpStopTime = millis();
+            estimatedWateredLiters[estimatedWateredLitersIndex] = ((pumpStopTime - pumpStartTime) / 60000) * troughtput_l_min;
+            estimatedWateredLitersIndex++;
+            //collect statistics
+        }
+        int getTroughtput(){
+            return troughtput_l_min;
+        }
+    protected:
+        int troughtput_l_min;
+        unsigned long pumpStartTime;
+        unsigned long pumpStopTime;
+        int estimatedWateredLiters[20];
+        int estimatedWateredLitersIndex;
 };
 
 
@@ -272,12 +298,32 @@ class DigitalPinOUT : public AsyncCommDevice{
 
 //end of sensors
 
-/**
- * @brief WaterringState class
-*/
 class Waterring{
     public:
-        Waterring(WaterringComm * waterringComm, Pump* pump, SoilMoistureSensor* soilMoistureSensor1 = NULL, SoilMoistureSensor* soilMoistureSensor2 = NULL) : waterringComm(waterringComm), currentWaterringState(AUTOMATED), soilMoistureSensor1(soilMoistureSensor1), soilMoistureSensor2(soilMoistureSensor2), pump(pump), waterringTimeSeconds(60){}
+    Waterring(WaterringComm * waterringComm) : waterringComm(waterringComm), currentWaterringState(AUTOMATED) {};
+    void setup_hook(){}
+    void loop_hook(){}
+    void manualOn(){
+        currentWaterringState = MANUAL_ON;
+    }
+    void manualOff(){
+        currentWaterringState = MANUAL_OFF;
+    }
+    void manualCycle(){
+        currentWaterringState = MANUAL_CYCLE;
+    }
+    protected:
+    WaterringState currentWaterringState;
+    WaterringComm * waterringComm;
+};
+
+/**
+ * @brief WaterringPump2MoistureSensor class
+ * State machine for waterring single place 
+*/
+class WaterringPump2MoistureSensor : public Waterring{
+    public:
+        WaterringPump2MoistureSensor(WaterringComm * waterringComm, Pump* pump, SoilMoistureSensor* soilMoistureSensor1 = NULL, SoilMoistureSensor* soilMoistureSensor2 = NULL) : Waterring(waterringComm), waterringComm(waterringComm), currentWaterringState(AUTOMATED), soilMoistureSensor1(soilMoistureSensor1), soilMoistureSensor2(soilMoistureSensor2), pump(pump), waterringTimeSeconds(60){}
         void setup_hook();
         void loop_hook();
         WaterringState getWaterringState(){
@@ -318,8 +364,7 @@ class Waterring{
             return waterringTimeSeconds;
         }
         void waterringStateMachine();
-    private:
-        WaterringState currentWaterringState;
+    protected:
         unsigned long startWateringTime;
         unsigned long lastWateringTime;
         int waterringTimeSeconds;
@@ -329,17 +374,17 @@ class Waterring{
         SoilMoistureSensor *soilMoistureSensor2;
         Pump *pump;
         SensorsState sensorsState;
-        WaterringComm *waterringComm;
+        int maxDaylyWateredLiters;
 };
 
-void Waterring::setup_hook(){
+void WaterringPump2MoistureSensor::setup_hook(){
     //setup hook for all sensors and actuators
     soilMoistureSensor1->setup_hook();
     soilMoistureSensor2->setup_hook();
     pump->setup_hook();
 }
 
-void Waterring::loop_hook(){
+void WaterringPump2MoistureSensor::loop_hook(){
     //hook all sensors and actuators
     soilMoistureSensor1->loop_hook();
     soilMoistureSensor2->loop_hook();
@@ -347,7 +392,7 @@ void Waterring::loop_hook(){
     waterringStateMachine();
 }
 
-void Waterring::waterringStateMachine(){
+void WaterringPump2MoistureSensor::waterringStateMachine(){
     switch(currentWaterringState){
         case AUTOMATED_WATERING:
             if(millis() - startWateringTime > wateringCycleSeconds * 1000){
