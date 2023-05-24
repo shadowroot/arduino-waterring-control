@@ -17,7 +17,7 @@ enum SensorsState{
     FAIL_SENSOR1,
     FAIL_SENSOR2,
     FAIL_ALL_SENSORS,
-    OK,
+    GOOD
 };
 
 class BaseSensor{
@@ -187,17 +187,17 @@ class DigitalPinOUT : public BaseSensor{
 
 class Waterring{
     public:
-    Waterring() : currentWaterringState(AUTOMATED) {};
+    Waterring() : currentWaterringState(WaterringState::AUTOMATED) {};
     void setup_hook(){}
     void loop_hook(){}
     void manualOn(){
-        currentWaterringState = MANUAL_ON;
+        currentWaterringState = WaterringState::MANUAL_ON;
     }
     void manualOff(){
-        currentWaterringState = MANUAL_OFF;
+        currentWaterringState = WaterringState::MANUAL_OFF;
     }
     void manualCycle(){
-        currentWaterringState = MANUAL_CYCLE;
+        currentWaterringState = WaterringState::MANUAL_CYCLE;
     }
     protected:
     WaterringState currentWaterringState;
@@ -282,20 +282,20 @@ void WaterringPump2MoistureSensor::waterringStateMachine(){
     switch(currentWaterringState){
         case AUTOMATED_WATERING:
             if(millis() - startWateringTime > wateringCycleSeconds * 1000){
-                currentWaterringState = AUTOMATED;
+                currentWaterringState = WaterringState::AUTOMATED;
                 pump->off();
                 //either not working or disconnected
                 if((soilMoistureSensor1 && soilMoistureSensor1->isError()) && (soilMoistureSensor2 && soilMoistureSensor2->isError())){
-                    sensorsState = FAIL_ALL_SENSORS;
+                    sensorsState = SensorsState::FAIL_ALL_SENSORS;
                 }
                 else if(soilMoistureSensor1 && soilMoistureSensor1->isError()){
-                    sensorsState = FAIL_SENSOR1;
+                    sensorsState = SensorsState::FAIL_SENSOR1;
                 }
                 else if(soilMoistureSensor2 && soilMoistureSensor2->isError()){
-                    sensorsState = FAIL_SENSOR2;
+                    sensorsState = SensorsState::FAIL_SENSOR2;
                 }
                 else{
-                    sensorsState = OK;
+                    sensorsState = SensorsState::GOOD;
                 }
                 lastWateringTime = millis();
             }

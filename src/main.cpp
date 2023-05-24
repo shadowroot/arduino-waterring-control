@@ -11,7 +11,7 @@ HAMqtt mqtt(client, device);
 
 
 HASwitch main_water_pump("main_water_pump");
-HASwitch main_water_pump("auto_water_switch");
+HASwitch auto_water_pump("auto_water_switch");
 SoilMoistureSensor sensor1(SOIL_MOISTURE_SENSOR1_PIN, "sensor1", 1800, 40);
 SoilMoistureSensor sensor2(SOIL_MOISTURE_SENSOR2_PIN, "sensor2", 1800, 40);
 Pump pump(PUMP_PIN, "pump");
@@ -69,6 +69,8 @@ void setup() {
     // handle switch state - turn on/off the pump - not command for each action, but just state changer
     main_water_pump.onCommand(onPumpSwitchCommand);
     main_water_pump.setName("Pump on/off"); // optional
+    auto_water_pump.onCommand(onAutoSwitchCommand);
+    auto_water_pump.setName("Auto/manual"); // optional
     mqtt.begin(BROKER_ADDR, BROKER_USERNAME, BROKER_PASSWORD);
 }
 
