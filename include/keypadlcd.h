@@ -75,7 +75,7 @@ class KeypadLCDControl{
 // read the buttons
 ButtonPressed KeypadLCDControl::read_LCD_buttons()
 {
-  adc_key_in = analogRead(PIN_A0);      // read the value from the sensor 
+  adc_key_in = analogRead(buttonPin);      // read the value from the sensor 
   // my buttons when read are centered at these valies: 0, 144, 329, 504, 741
   // we add approx 50 to those values and check to see if we are close
   selectedKey = ButtonPressed::NONE;
