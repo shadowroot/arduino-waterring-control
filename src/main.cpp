@@ -3,6 +3,7 @@
 #include <ArduinoHA.h>
 #include "config.h"
 #include "waterring.h"
+#include "keypadlcd.h"
 
 WiFiClient client;
 HADevice device;
@@ -11,9 +12,10 @@ HAMqtt mqtt(client, device);
 
 HASwitch main_water_pump("main_water_pump");
 HASwitch main_water_pump("auto_water_switch");
-SoilMoistureSensor sensor1(GPIO_NUM_0, "sensor1", 1800, 40);
-SoilMoistureSensor sensor2(GPIO_NUM_1, "sensor2", 1800, 40);
-Pump pump(GPIO_NUM_2, "pump");
+SoilMoistureSensor sensor1(SOIL_MOISTURE_SENSOR1_PIN, "sensor1", 1800, 40);
+SoilMoistureSensor sensor2(SOIL_MOISTURE_SENSOR2_PIN, "sensor2", 1800, 40);
+Pump pump(PUMP_PIN, "pump");
+MoistureSensorPower moistureSensorPower(GPIO_NUM_3, "moistureSensorPower");
 WaterringPump2MoistureSensor watering(&pump, &sensor1, &sensor2);
 
 
