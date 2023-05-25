@@ -51,17 +51,21 @@ void initWiFi() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   device.setUniqueId(mac, sizeof(mac));
-
+  Serial.print("Connectin to SSID:");
+  Serial.println(WIFI_SSID);
   Serial.print("Connecting to WiFi ..");
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print('.');
     delay(1000);
   }
+  Serial.println("");
+  Serial.print("IP: ");
   Serial.println(WiFi.localIP());
 }
 
 void setup() {
-    watering.setup_hook();
+    Serial.begin(BAUD_RATE);
+    Serial.println("Setup start");
     initWiFi();
     // set device's details (optional)
     device.setName("PumpController");
@@ -72,9 +76,11 @@ void setup() {
     auto_water_pump.onCommand(onAutoSwitchCommand);
     auto_water_pump.setName("Auto/manual"); // optional
     mqtt.begin(BROKER_ADDR, BROKER_USERNAME, BROKER_PASSWORD);
+    watering.setup_hook();
+    Serial.println("Setup done");
 }
 
 void loop() {
     mqtt.loop();
-    watering.loop_hook();
+    //watering.loop_hook();
 }

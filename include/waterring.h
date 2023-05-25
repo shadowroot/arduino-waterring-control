@@ -272,9 +272,14 @@ void WaterringPump2MoistureSensor::setup_hook(){
 
 void WaterringPump2MoistureSensor::loop_hook(){
     //hook all sensors and actuators
+    Serial.println("WaterringPump2MoistureSensor::loop_hook");
+    Serial.println("MoistureSensor1 loop_hook");
     soilMoistureSensor1->loop_hook();
+    Serial.println("MoistureSensor2 loop_hook");
     soilMoistureSensor2->loop_hook();
+    Serial.println("Pump loop_hook");
     pump->loop_hook();
+    Serial.println("Waterring state machine");
     waterringStateMachine();
 }
 
