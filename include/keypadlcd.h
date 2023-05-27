@@ -2,8 +2,6 @@
 #define LCD_H
 
 #include <LiquidCrystal.h>
-#include "config.h"
-#include <Arduino.h>
 
 /*******************************************************
 
@@ -21,9 +19,8 @@ class KeypadLCDControl{
     public:
         #ifdef ESP8266
             KeypadLCDControl() : lcd(D8, D9, D4, D5, D6, D7), buttonPin(PIN_A0) {}
-        #else
-            KeypadLCDControl() : lcd(LCD_RS_PIN, LCD_EN_PIN, LCD_D4_PIN, LCD_D5_PIN, LCD_D6_PIN, LCD_D7_PIN), buttonPin(BUTTON_PIN) {}
         #endif
+        KeypadLCDControl(int rs_pin, int en_pin, int d4_pin, int d5_pin, int d6_pin, int d7_pin, int buttonPin) : lcd(rs_pin, en_pin, d4_pin, d5_pin, d6_pin, d7_pin), buttonPin(buttonPin) {}
         ButtonPressed read_LCD_buttons();
         void setup_hook();
         void loop_hook();
