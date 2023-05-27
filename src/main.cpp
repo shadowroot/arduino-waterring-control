@@ -3,7 +3,8 @@
 #include <ArduinoHA.h>
 #include "config.h"
 #include "waterring.h"
-#include "keypadlcd.h"
+#include <Adafruit_SSD1306.h>
+#include <Wire.h>
 
 WiFiClient client;
 HADevice device;
@@ -18,6 +19,7 @@ Pump pump(PUMP_PIN, "pump");
 MoistureSensorPower moistureSensorPower(GPIO_NUM_3, "moistureSensorPower");
 WaterringPump2MoistureSensor watering(&pump, &sensor1, &sensor2);
 
+Adafruit_SSD1306 display(128, 32, &Wire);
 
 void onPumpSwitchCommand(bool state, HASwitch* sender)
 {
@@ -64,7 +66,7 @@ void initWiFi() {
 }
 
 void setup() {
-    Serial.begin(BAUD_RATE);
+    Serial.begin(SERIAL_BAUD_RATE);
     Serial.println("Setup start");
     initWiFi();
     // set device's details (optional)
@@ -78,9 +80,37 @@ void setup() {
     mqtt.begin(BROKER_ADDR, BROKER_USERNAME, BROKER_PASSWORD);
     watering.setup_hook();
     Serial.println("Setup done");
+
+    //LCD 1306
+    display.begin(SSD1306_SWITCHCAPVCC, 0x3C); // Address 0x3C for 128x32
+    // Show image buffer on the display hardware.
+    // Since the buffer is intialized with an Adafruit splashscreen
+    // internally, this will display the splashscreen.
+    display.display();
+    delay(1000);
+
+    // Clear the buffer.
+    display.clearDisplay();
+        // text display tests
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE);
+    display.setCursor(0,0);
+    display.print("Connecting to SSID\n ");
+    display.print(WIFI_SSID);
+    display.print(" ");
+    display.print("connected!");
+    display.println("IP: 10.0.1.23");
+    display.println("Sending val #0");
+    display.setCursor(0,0);
+    display.display(); // actually display all of the above
+
+    pinMode(BUTTON_PIN, INPUT_PULLUP);
 }
 
 void loop() {
     mqtt.loop();
-    //watering.loop_hook();
+    if(digitalRead(BUTTON_PIN) == LOW){
+        watering.manualSwitch();
+        while(digitalRead(BUTTON_PIN) == LOW){}
+    }
 }

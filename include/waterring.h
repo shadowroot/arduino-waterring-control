@@ -187,7 +187,7 @@ class DigitalPinOUT : public BaseSensor{
 
 class Waterring{
     public:
-    Waterring() : currentWaterringState(WaterringState::AUTOMATED) {};
+    Waterring() : currentWaterringState(WaterringState::MANUAL_OFF) {};
     void setup_hook(){}
     void loop_hook(){}
     void manualOn(){
@@ -236,6 +236,13 @@ class WaterringPump2MoistureSensor : public Waterring{
         }
         void runManualCycle(){
             currentWaterringState = MANUAL_CYCLE;
+        }
+        void manualSwitch(){
+            if(currentWaterringState == MANUAL_ON){
+                manualOff();
+            }else{
+                manualOn();
+            }
         }
         int getWaterringCycleSeconds(){
             return wateringCycleSeconds;

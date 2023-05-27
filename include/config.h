@@ -1,5 +1,6 @@
-#define BAUD_RATE 115200
+#define SERIAL_BAUD_RATE 115200
 
+//ESP32C3
 #define SOIL_MOISTURE_SENSOR1_PIN GPIO_NUM_0
 #define SOIL_MOISTURE_SENSOR2_PIN GPIO_NUM_1
 #define PUMP_PIN GPIO_NUM_2
@@ -12,10 +13,14 @@
 #define LCD_D7_PIN GPIO_NUM_9
 #define BUTTON_PIN GPIO_NUM_4
 
+//ESP32C3
+#define I2C_SCL_PIN GPIO_NUM_5
+#define I2C_SDA_PIN GPIO_NUM_4
+
 #define BROKER_ADDR     IPAddress(37, 205, 14, 122)
 #define BROKER_PORT     1883
 #define BROKER_USERNAME "haas"
-#define BROKER_PASSWORD "mqtt"
+#define BROKER_PASSWORD "Zerogeneration0!"
 
 #define WIFI_SSID       "Hells Gate IOT"
 #define WIFI_PASSWORD   "HadejHeslo0" 
