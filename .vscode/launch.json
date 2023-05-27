@@ -12,8 +12,8 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug",
-            "executable": "/home/jonny/git/water-control/water-control-simple/arduino-waterring-control/.pio/build/esp32c3/firmware.elf",
-            "projectEnvName": "esp32c3",
+            "executable": "/home/jonny/git/water-control/water-control-simple/arduino-waterring-control/.pio/build/esp32c3-luatos-test/firmware.elf",
+            "projectEnvName": "esp32c3-luatos-test",
             "toolchainBinDir": "/home/jonny/.platformio/packages/toolchain-riscv32-esp/bin",
             "internalConsoleOptions": "openOnSessionStart",
             "preLaunchTask": {
@@ -25,8 +25,8 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug (skip Pre-Debug)",
-            "executable": "/home/jonny/git/water-control/water-control-simple/arduino-waterring-control/.pio/build/esp32c3/firmware.elf",
-            "projectEnvName": "esp32c3",
+            "executable": "/home/jonny/git/water-control/water-control-simple/arduino-waterring-control/.pio/build/esp32c3-luatos-test/firmware.elf",
+            "projectEnvName": "esp32c3-luatos-test",
             "toolchainBinDir": "/home/jonny/.platformio/packages/toolchain-riscv32-esp/bin",
             "internalConsoleOptions": "openOnSessionStart"
         },
@@ -34,8 +34,8 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug (without uploading)",
-            "executable": "/home/jonny/git/water-control/water-control-simple/arduino-waterring-control/.pio/build/esp32c3/firmware.elf",
-            "projectEnvName": "esp32c3",
+            "executable": "/home/jonny/git/water-control/water-control-simple/arduino-waterring-control/.pio/build/esp32c3-luatos-test/firmware.elf",
+            "projectEnvName": "esp32c3-luatos-test",
             "toolchainBinDir": "/home/jonny/.platformio/packages/toolchain-riscv32-esp/bin",
             "internalConsoleOptions": "openOnSessionStart",
             "loadMode": "manual"
