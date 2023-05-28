@@ -66,7 +66,7 @@ void initWiFi() {
 }
 
 void setup() {
-    Serial.begin(9600);
+    Serial.begin(SERIAL_BAUD_RATE);
     Serial.println("Setup start");
     initWiFi();
     // set device's details (optional)
